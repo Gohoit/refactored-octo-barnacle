@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Assigning an agent — please wait</title>
+  <meta name="robots" content="noindex">
+  <style>
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: radial-gradient(circle at 20% 20%, #0f0c29, #302b63, #24243e);
+      background-image: url('https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=1500&q=80');
+      background-size: cover;
+      background-position: center;
+      color: #e0f2fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    .overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 0;
+    }
+    .card {
+      position: relative;
+      z-index: 1;
+      background: rgba(15, 23, 42, 0.85);
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+      max-width: 620px;
+      width: 94%;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      color: #7dd3fc;
+      text-shadow: 0 0 10px #0ea5e9;
+    }
+    p {
+      margin: 8px 0;
+      color: #bae6fd;
+    }
+    .count {
+      font-weight: 700;
+      font-size: 42px;
+      margin: 16px 0;
+      color: #f472b6;
+      text-shadow: 0 0 15px #f472b6;
+    }
+    .small {
+      font-size: 14px;
+      color: #a5b4fc;
+    }
+    button {
+      border: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 14px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+    }
+    #manual {
+      background: linear-gradient(90deg, #06b6d4, #3b82f6);
+      color: white;
+      box-shadow: 0 0 15px #3b82f6;
+    }
+    #manual:hover {
+      box-shadow: 0 0 25px #60a5fa;
+      transform: scale(1.05);
+    }
+    #manual[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    #telegram {
+      background: linear-gradient(90deg, #ec4899, #8b5cf6);
+      color: white;
+      box-shadow: 0 0 15px #a855f7;
+      margin-left: 8px;
+    }
+    #telegram:hover {
+      box-shadow: 0 0 25px #d946ef;
+      transform: scale(1.05);
+    }
+    .progress {
+      height: 10px;
+      background: #1e293b;
+      border-radius: 999px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg,#34d399,#06b6d4);
+      box-shadow: 0 0 20px #06b6d4;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="card" role="main" aria-live="polite">
+    <h1>Please wait — assigning an available WhatsApp agent</h1>
+    <p class="small">This helps distribute chats fairly. Do not close this page.</p>
+    <div class="count" id="count">60</div>
+    <div class="progress" aria-hidden="true"><div id="bar" class="bar"></div></div>
+    <p id="status" class="small">You will be redirected when the timer ends.</p>
+    <button id="manual" disabled>Redirect now (disabled)</button>
+    <button id="telegram">Contact on Telegram</button>
+    <p class="small" style="margin-top:10px">If auto-redirect fails, please check your network or try again later.</p>
+  </div>
+  <script>
+(() => {
+  const rawNumbers = [
+"+91 80025 42032","+91 93607 41279","+91 91403 63058","+91 77430 24873","+91 91412 85096",
+"+91 94197 34660","+91 99726 74382","+91 81143 24929","+91 82644 43056","+91 72063 38310",
+"+91 91503 09718","+91 93510 55913","+91 83194 64201","+91 63795 67864","+91 62640 68712",
+"+91 83194 64201","+91 70011 49702","+91 75238 99036","+91 79836 70710","+91 97023 90824",
+"+91 97378 18806","+91 62009 46260","+91 73837 28403","+91 91412 85096","+91 82644 43056",
+"+91 97178 47586","+91 80756 41101","+91 93433 42325","+91 81940 49690","+91 95741 62580",
+"+91 92115 81790","+91 91116 99517","+91 73208 74304","+91 91229 07390","+91 97305 15983",
+"+91 93433 42325","+91 80756 41101","+91 91229 07390","+91 80540 39012","+91 76438 37805"
+  ];
+  function normalize(s){ return (s||"").replace(/\D+/g,''); }
+  const seen = new Set();
+  const numbers = [];
+  for (const r of rawNumbers) {
+    const d = normalize(r);
+    if (d && !seen.has(d)) { seen.add(d); numbers.push(d); }
+  }
+
+  const TOTAL = 60;
+  let remaining = TOTAL;
+  const countEl = document.getElementById("count");
+  const barEl = document.getElementById("bar");
+  const statusEl = document.getElementById("status");
+  const manualBtn = document.getElementById("manual");
+  const telegramBtn = document.getElementById("telegram");
+
+  telegramBtn.addEventListener("click", () => {
+    window.open("https://t.me/sharechatagentloot", "_blank");
+  });
+
+  function updateUI(){
+    countEl.textContent = remaining;
+    const pct = Math.round(((TOTAL - remaining)/TOTAL)*100);
+    barEl.style.width = pct + "%";
+    if (remaining <= 0) {
+      countEl.textContent = "0";
+      barEl.style.width = "100%";
+    }
+  }
+
+  async function performRedirect(){
+    try {
+      if (!Array.isArray(numbers) || numbers.length === 0) {
+        statusEl.textContent = "No agent numbers configured — please contact support.";
+        manualBtn.disabled = true;
+        return;
+      }
+      statusEl.textContent = "Selecting an agent now…";
+      const pick = numbers[Math.floor(Math.random()*numbers.length)];
+      const safe = pick.replace(/\D+/g,'');
+      if (!safe) { statusEl.textContent = "Invalid agent number — please contact support."; return; }
+      setTimeout(()=> { window.location.replace("https://wa.me/" + safe); }, 600);
+    } catch(e) {
+      console.error(e);
+      statusEl.textContent = "An error occurred — please try again.";
+    }
+  }
+
+  manualBtn.addEventListener("click", ()=>{
+    remaining = 0;
+    clearInterval(timer);
+    updateUI();
+    manualBtn.disabled = true;
+    performRedirect();
+  });
+
+  updateUI();
+  const timer = setInterval(()=>{
+    remaining--;
+    updateUI();
+    if (remaining <= 0) {
+      clearInterval(timer);
+      manualBtn.disabled = true;
+      performRedirect();
+    } else {
+      if (remaining <= 5) manualBtn.disabled = false;
+      statusEl.textContent = "Please wait — assigning an agent…";
+    }
+  }, 1000);
+})();
+  </script>
+</body>
+</html>
